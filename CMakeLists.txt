@@ -169,11 +169,9 @@ elseif(WIN32)
     message(STATUS "Enabled MIDI support (WinMM)")
     add_subdirectory(src/midi)
 else()
-    # Workaround for SDL bug #3295, which occurs in SDL2 <2.0.5
+    # Require at least 2.0.5, to avoid SDL bug #3295
     # https://bugzilla.libsdl.org/show_bug.cgi?id=3295
-    cmake_policy(SET CMP0004 OLD)
-
-    find_package(SDL2 REQUIRED)
+    find_package(SDL2 REQUIRED 2.0.5)
 endif()
 
 # Prefer static linkage under OS X for libraries located with find_package()
