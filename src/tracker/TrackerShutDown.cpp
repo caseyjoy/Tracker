@@ -28,6 +28,13 @@
  *
  */
 
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <string>
+
+#include <toml.hpp>
+
 #include "Tracker.h"
 #include "TabManager.h"
 #include "MilkyPlay.h"
@@ -127,125 +134,139 @@ bool Tracker::shutDown()
 
 	playerMaster->stop(true);
 
-	XMFile f(System::getConfigFileName(), true);
+	//std::string filename = System::getConfigFileName();
 
-	if(f.isOpenForWriting())
-	{
-		// ----------- Save last settings -----------
-		// store version string to database
-		settingsDatabase->store("VERSION", MILKYTRACKER_VERSION );
+	// auto data = toml::parse<toml::preserve_comments>("tracker_test.toml");
+	// toml::value data;
+	// toml::value data{{"foo", 42}, {"bar", "baz"}};
 
-		char buffer[100];
-		// playmode settings
-		const char* playModeStrings[5] = {"AUTO", "PROTRACKER2", "PROTRACKER3", "SCREAMTRACKER3", "FASTTRACKER2"};
+	
+	//auto data2 = toml::parse<toml::preserve_comments>(filename);
+	//std::cout << "data 2:\n";
+	//std::cout << std::setw(80) << data2 << std::endl;
+	//std::cout << "-- end data --\n";
+	
+	std::string playModeStrings[5] = {"AUTO", "PROTRACKER2", "PROTRACKER3", "SCREAMTRACKER3", "FASTTRACKER2"};
+	int playMode = playerController->getPlayMode();
+	ASSERT(playMode >= 0 && playMode < 5);
 
-		pp_int32 playMode = playerController->getPlayMode();
+	std::vector<int> panning;
+	for (i = 0; i < TrackerConfig::numPlayerChannels; i++)
+		panning.push_back(playerController->getPanning((int)i));
+	// might be able to just grab a slice of the whole thing?
+	// std::cout << playerController->getPanningTable();
 
-		ASSERT(playMode >= 0 && playMode < 5);
+	//PPDictionary dictionary = sectionSamples->getSampleEditorControl()->getLastValues().convertToDictionary();
+	//std::string lastValues = (std::string)dictionary.serializeToString();
+	PPDictionary dictionary = sectionSamples->getSampleEditorControl()->getLastValues().convertToDictionary();
+	std::string lastValues = (std::string)dictionary.serializeToString();
 
-		settingsDatabase->store("PLAYMODEKEEPSETTINGS", sectionQuickOptions->keepSettings());
-		settingsDatabase->store("PLAYMODE", sectionQuickOptions->keepSettings() ? playModeStrings[playMode] : playModeStrings[4]);
+	std::vector<int> sectionoptimize;
+	for (i = 0; i < (signed)SectionOptimize::getNumFlagGroups(); i++) {
+		sectionoptimize.push_back(sectionOptimize->getOptimizeCheckBoxFlags(i));
+	}
 
-		settingsDatabase->store("PLAYMODE_ADVANCED_ALLOW8xx", playerController->isPlayModeOptionEnabled(PlayerController::PlayModeOptionPanning8xx));
-		settingsDatabase->store("PLAYMODE_ADVANCED_ALLOWE8x", playerController->isPlayModeOptionEnabled(PlayerController::PlayModeOptionPanningE8x));
-		// Only affects protracker playmodes
-		settingsDatabase->store("PLAYMODE_ADVANCED_PTPITCHLIMIT", playerController->isPlayModeOptionEnabled(PlayerController::PlayModeOptionForcePTPitchLimit));
+	TitlePageManager titlePageManager(*screen);
 
-		// save default panning for protracker playmodes
-		pp_uint8* panning = new pp_uint8[TrackerConfig::numPlayerChannels];
-		for (i = 0; i < TrackerConfig::numPlayerChannels; i++)
-			panning[i] = playerController->getPanning((pp_uint8)i);
+	//TColorPalette palette;
+	/*std::vector<std::string> palette;
+	int numColors = GlobalColorConfig::ColorLast;
+	for (i = 0; i < numColors; i++)
+		auto color = GlobalColorConfig::getInstance()->getColor((GlobalColorConfig::GlobalColors)i);
+		palette.push_back();
+		//palette.colors[i] = ;	
+	*/
 
-		settingsDatabase->store("PLAYMODE_ADVANCED_PTPANNING", PPTools::encodeByteArray(panning, TrackerConfig::numPlayerChannels));
-		delete[] panning;
+	TColorPalette palette;
+	palette.numColors = GlobalColorConfig::ColorLast;
+	for (i = 0; i < palette.numColors; i++)
+		palette.colors[i] = GlobalColorConfig::getInstance()->getColor((GlobalColorConfig::GlobalColors)i);	
 
-		// quick options
-		settingsDatabase->store("PROSPECTIVE", getProspectiveMode() ? 1 : 0);
-		settingsDatabase->store("WRAPAROUND", getCursorWrapAround() ? 1 : 0);
-		settingsDatabase->store("FOLLOWSONG", getFollowSong() ? 1 : 0);
-		settingsDatabase->store("LIVESWITCH", playerLogic->getLiveSwitch() ? 1 : 0);
+	std::string paletteString = (std::string)ColorPaletteContainer::encodePalette(palette);
 
-		// Disk Operations
-		settingsDatabase->store("INTERNALDISKBROWSERSETTINGS", sectionDiskMenu->getConfigUInt32());	
-		settingsDatabase->store("INTERNALDISKBROWSERLASTPATH", sectionDiskMenu->getCurrentPathASCII());
 
-		// HD recorder
-		settingsDatabase->store("HDRECORDER_MIXFREQ", sectionHDRecorder->getSettingsFrequency());
-		settingsDatabase->store("HDRECORDER_MIXERVOLUME", sectionHDRecorder->getSettingsMixerVolume());
-		settingsDatabase->store("HDRECORDER_MIXERSHIFT", sectionHDRecorder->getSettingsMixerShift());
-		settingsDatabase->store("HDRECORDER_RAMPING", sectionHDRecorder->getSettingsRamping() ? 1 : 0);
-		settingsDatabase->store("HDRECORDER_INTERPOLATION", sectionHDRecorder->getSettingsResampler());
-		settingsDatabase->store("HDRECORDER_ALLOWMUTING", sectionHDRecorder->getSettingsAllowMuting() ? 1 : 0);
 
-		// sample editor
-		settingsDatabase->store("SAMPLEEDITORDECIMALOFFSETS", sectionSamples->getOffsetFormat());
-		// Sample editor contol will store last used values here
-		PPDictionary dictonary = sectionSamples->getSampleEditorControl()->getLastValues().convertToDictionary();
-		PPString lastValues = dictonary.serializeToString();
-		settingsDatabase->store("SAMPLEEDITORLASTVALUES", lastValues);
+	// TODO: Maybe replace vectors with a specified size array?
+	std::vector<std::string> predefenvelopevolume;
+	for (i = 0; i < sectionInstruments->getNumPredefinedEnvelopes(); i++) {
+		predefenvelopevolume.push_back(
+			(std::string)sectionInstruments->getEncodedEnvelope(SectionInstruments::EnvelopeTypeVolume, i));
+	}
+	std::vector<std::string> predefenvelopepanning;
+	for (i = 0; i < sectionInstruments->getNumPredefinedEnvelopes(); i++) {
+		predefenvelopepanning.push_back(
+			(std::string)sectionInstruments->getEncodedEnvelope(SectionInstruments::EnvelopeTypePanning, i));
+	}
 
-		// Optimizer
-		for (i = 0; i < (signed)SectionOptimize::getNumFlagGroups(); i++)
-		{
-			sprintf(buffer, "OPTIMIZER_%i",i);
-			settingsDatabase->store(buffer, sectionOptimize->getOptimizeCheckBoxFlags(i));
-		}
 
-		// Scale of envelope editor
-		settingsDatabase->store("ENVELOPEEDITORSCALE", sectionInstruments->getEnvelopeEditorControl()->getScale());
 
-		// Orderlist was expanded?
-		settingsDatabase->store("EXTENDEDORDERLIST", extendedOrderlist ? 1 : 0);
+	std::vector<int> effectmacro;
+	for (i = 0; i < NUMEFFECTMACROS; i++) {
+		pp_uint8 eff, op;
+		getPatternEditor()->getMacroOperands(i, eff, op);
+		pp_int32 val = (((pp_int32)eff) << 8) + (pp_int32)op;
+		effectmacro.push_back((int)val);
+	}
+	std::vector<std::string> predefcolorpalette;
+	for (i = 0; i < sectionSettings->getNumPredefinedColorPalettes(); i++) {
+		predefcolorpalette.push_back((std::string)sectionSettings->getEncodedPalette(i));
+	}
 
-		// Current row insert add value
-		settingsDatabase->store("ROWINSERTADD", getPatternEditorControl()->getRowInsertAdd());
 
-		// Current visible title page
-		TitlePageManager titlePageManager(*screen);
-		settingsDatabase->store("TITLEPAGE", titlePageManager.getCurrentTitlePage());
 
-		// Save colors
-		TColorPalette palette;
-		palette.numColors = GlobalColorConfig::ColorLast;
-		for (i = 0; i < palette.numColors; i++)
-			palette.colors[i] = GlobalColorConfig::getInstance()->getColor((GlobalColorConfig::GlobalColors)i);	
+        const toml::value data{
+		{"metadata", {
+			{"app_version", MILKYTRACKER_VERSION},
+			{"config_version", 0}
+		}},
+		{"settings", {
+			{"PLAYMODEKEEPSETTINGS", sectionQuickOptions->keepSettings() ? playModeStrings[playMode] : playModeStrings[4]},
+			{"PLAYMODE_ADVANCED_ALLOW8xx", playerController->isPlayModeOptionEnabled(PlayerController::PlayModeOptionPanning8xx)},
+			{"PLAYMODE_ADVANCED_ALLOWE8x", playerController->isPlayModeOptionEnabled(PlayerController::PlayModeOptionPanningE8x)},
+			{"PLAYMODE_ADVANCED_PTPITCHLIMIT", playerController->isPlayModeOptionEnabled(PlayerController::PlayModeOptionForcePTPitchLimit)},
+			{"PLAYMODE_ADVANCED_PTPANNING", panning},
+			{"quick_options", {
+					{"PROSPECTIVE", getProspectiveMode() ? 1 : 0},
+					{"WRAPAROUND", getCursorWrapAround() ? 1 : 0},
+					{"FOLLOWSONG", getFollowSong() ? 1 : 0},
+					{"LIVESWITCH", playerLogic->getLiveSwitch() ? 1 : 0}	
+			}},
+			{"disk_operations", {
+				{"INTERNALDISKBROWSERSETTINGS", sectionDiskMenu->getConfigUInt32()},
+				{"INTERNALDISKBROWSERLASTPATH", (std::string)sectionDiskMenu->getCurrentPathASCII()}
+			}},
+			{"HD_recorder", {
+				{"HDRECORDER_MIXFREQ", sectionHDRecorder->getSettingsFrequency()},
+				{"HDRECORDER_MIXERVOLUME", sectionHDRecorder->getSettingsMixerVolume()},
+				{"HDRECORDER_MIXERSHIFT", sectionHDRecorder->getSettingsMixerShift()},
+				{"HDRECORDER_RAMPING", sectionHDRecorder->getSettingsRamping() ? 1 : 0},
+				{"HDRECORDER_INTERPOLATION", sectionHDRecorder->getSettingsResampler()},
+				{"HDRECORDER_ALLOWMUTING", sectionHDRecorder->getSettingsAllowMuting() ? 1 : 0}
+			}},
+			{"sample_editor", {
+				{"SAMPLEEDITORDECIMALOFFSETS", sectionSamples->getOffsetFormat()},
+				{"SAMPLEEDITORLASTVALUES", lastValues}
+			}},
+			{"optimizer", sectionoptimize},
+			{"ENVELOPEEDITORSCALE", sectionInstruments->getEnvelopeEditorControl()->getScale()},
+			{"EXTENDEDORDERLIST", extendedOrderlist ? 1 : 0},
+			{"ROWINSERTADD", getPatternEditorControl()->getRowInsertAdd()},
+			{"TITLEPAGE", titlePageManager.getCurrentTitlePage()},
+			{"ACTIVECOLORS", paletteString},
+			{"PREDEFENVELOPEVOLUME", predefenvelopevolume},
+			{"PREDEFENVELOPEPANNING", predefenvelopepanning},
+			{"EFFECTMACRO", effectmacro},
+			{"PREDEFCOLORPALETTE", predefcolorpalette}
+		}}
+	};
 
-		settingsDatabase->store("ACTIVECOLORS", ColorPaletteContainer::encodePalette(palette));
-
-		// store predefined envelopes
-		for (i = 0; i < sectionInstruments->getNumPredefinedEnvelopes(); i++)
-		{
-			sprintf(buffer, "PREDEFENVELOPEVOLUME_%i",i);
-			settingsDatabase->store(buffer, sectionInstruments->getEncodedEnvelope(SectionInstruments::EnvelopeTypeVolume, i));
-		}
-
-		for (i = 0; i < sectionInstruments->getNumPredefinedEnvelopes(); i++)
-		{
-			sprintf(buffer, "PREDEFENVELOPEPANNING_%i",i);		
-			settingsDatabase->store(buffer, sectionInstruments->getEncodedEnvelope(SectionInstruments::EnvelopeTypePanning, i));
-		}
-
-		// store effect macros from pattern editor control
-		for (i = 0; i < NUMEFFECTMACROS; i++)
-		{
-			sprintf(buffer, "EFFECTMACRO_%i",i);
-
-			pp_uint8 eff, op;
-			getPatternEditor()->getMacroOperands(i, eff, op);
-
-			pp_int32 val = (((pp_int32)eff) << 8) + (pp_int32)op;
-
-			settingsDatabase->store(buffer, val);
-		}
-
-		for (i = 0; i < sectionSettings->getNumPredefinedColorPalettes(); i++)
-		{
-			sprintf(buffer, "PREDEFCOLORPALETTE_%i",i);		
-			settingsDatabase->store(buffer, sectionSettings->getEncodedPalette(i));
-		}
-
-		settingsDatabase->serialize(f);
-	} // isOpenForWriting
+	//std::cout << "filename is... " << filename << "\n";
+ 	std::ofstream tomlfile;
+	//auto newfilename = filename+".toml"
+    tomlfile.open ("tracker_test.toml");
+    tomlfile << std::setw(155) << data << std::endl;
+    tomlfile.close();
+	
 
 	return true;
 }

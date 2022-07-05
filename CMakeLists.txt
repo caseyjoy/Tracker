@@ -37,6 +37,8 @@ add_definitions(-DMILKYTRACKER)
 # Adhere to GNU filesystem layout conventions
 include(GNUInstallDirs)
 
+find_library(TOML11 toml11)
+
 # Force SDL if requested
 option(FORCESDL "Force SDL instead of native" OFF)
 if(FORCESDL)
