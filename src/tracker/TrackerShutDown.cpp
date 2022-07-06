@@ -32,6 +32,7 @@
 #include <fstream>
 #include <vector>
 #include <string>
+#include <utility> 
 
 #include <toml.hpp>
 
@@ -118,12 +119,10 @@ bool Tracker::checkForChangesOpenModule()
 	return checkForChanges();
 }
 
-bool Tracker::shutDown()
-{
+bool Tracker::shutDown() {
 	pp_int32 i;
 	ModuleEditor* currentEditor = moduleEditor;
-	for (i = 0; i < tabManager->getNumTabs(); i++)
-	{
+	for (i = 0; i < tabManager->getNumTabs(); i++) {
 		moduleEditor = tabManager->getModuleEditorFromTabIndex(i);
 		bool res = checkForChanges();
 
@@ -134,18 +133,6 @@ bool Tracker::shutDown()
 
 	playerMaster->stop(true);
 
-	//std::string filename = System::getConfigFileName();
-
-	// auto data = toml::parse<toml::preserve_comments>("tracker_test.toml");
-	// toml::value data;
-	// toml::value data{{"foo", 42}, {"bar", "baz"}};
-
-	
-	//auto data2 = toml::parse<toml::preserve_comments>(filename);
-	//std::cout << "data 2:\n";
-	//std::cout << std::setw(80) << data2 << std::endl;
-	//std::cout << "-- end data --\n";
-	
 	std::string playModeStrings[5] = {"AUTO", "PROTRACKER2", "PROTRACKER3", "SCREAMTRACKER3", "FASTTRACKER2"};
 	int playMode = playerController->getPlayMode();
 	ASSERT(playMode >= 0 && playMode < 5);
@@ -158,8 +145,7 @@ bool Tracker::shutDown()
 
 	//PPDictionary dictionary = sectionSamples->getSampleEditorControl()->getLastValues().convertToDictionary();
 	//std::string lastValues = (std::string)dictionary.serializeToString();
-	PPDictionary dictionary = sectionSamples->getSampleEditorControl()->getLastValues().convertToDictionary();
-	std::string lastValues = (std::string)dictionary.serializeToString();
+	const toml::value lastValues = sectionSamples->getSampleEditorControl()->getLastValues().convertToTOML();
 
 	std::vector<int> sectionoptimize;
 	for (i = 0; i < (signed)SectionOptimize::getNumFlagGroups(); i++) {
@@ -168,14 +154,6 @@ bool Tracker::shutDown()
 
 	TitlePageManager titlePageManager(*screen);
 
-	//TColorPalette palette;
-	/*std::vector<std::string> palette;
-	int numColors = GlobalColorConfig::ColorLast;
-	for (i = 0; i < numColors; i++)
-		auto color = GlobalColorConfig::getInstance()->getColor((GlobalColorConfig::GlobalColors)i);
-		palette.push_back();
-		//palette.colors[i] = ;	
-	*/
 
 	TColorPalette palette;
 	palette.numColors = GlobalColorConfig::ColorLast;
@@ -183,8 +161,6 @@ bool Tracker::shutDown()
 		palette.colors[i] = GlobalColorConfig::getInstance()->getColor((GlobalColorConfig::GlobalColors)i);	
 
 	std::string paletteString = (std::string)ColorPaletteContainer::encodePalette(palette);
-
-
 
 	// TODO: Maybe replace vectors with a specified size array?
 	std::vector<std::string> predefenvelopevolume;
@@ -198,8 +174,7 @@ bool Tracker::shutDown()
 			(std::string)sectionInstruments->getEncodedEnvelope(SectionInstruments::EnvelopeTypePanning, i));
 	}
 
-
-
+	//
 	std::vector<int> effectmacro;
 	for (i = 0; i < NUMEFFECTMACROS; i++) {
 		pp_uint8 eff, op;
@@ -212,19 +187,19 @@ bool Tracker::shutDown()
 		predefcolorpalette.push_back((std::string)sectionSettings->getEncodedPalette(i));
 	}
 
-
-
-        const toml::value data{
+	const toml::value data{
 		{"metadata", {
 			{"app_version", MILKYTRACKER_VERSION},
 			{"config_version", 0}
 		}},
 		{"settings", {
-			{"PLAYMODEKEEPSETTINGS", sectionQuickOptions->keepSettings() ? playModeStrings[playMode] : playModeStrings[4]},
-			{"PLAYMODE_ADVANCED_ALLOW8xx", playerController->isPlayModeOptionEnabled(PlayerController::PlayModeOptionPanning8xx)},
-			{"PLAYMODE_ADVANCED_ALLOWE8x", playerController->isPlayModeOptionEnabled(PlayerController::PlayModeOptionPanningE8x)},
-			{"PLAYMODE_ADVANCED_PTPITCHLIMIT", playerController->isPlayModeOptionEnabled(PlayerController::PlayModeOptionForcePTPitchLimit)},
-			{"PLAYMODE_ADVANCED_PTPANNING", panning},
+			{"playmode", {
+				{"PLAYMODEKEEPSETTINGS", sectionQuickOptions->keepSettings() ? playModeStrings[playMode] : playModeStrings[4]},
+				{"PLAYMODE_ADVANCED_ALLOW8xx", playerController->isPlayModeOptionEnabled(PlayerController::PlayModeOptionPanning8xx)},
+				{"PLAYMODE_ADVANCED_ALLOWE8x", playerController->isPlayModeOptionEnabled(PlayerController::PlayModeOptionPanningE8x)},
+				{"PLAYMODE_ADVANCED_PTPITCHLIMIT", playerController->isPlayModeOptionEnabled(PlayerController::PlayModeOptionForcePTPitchLimit)},
+				{"PLAYMODE_ADVANCED_PTPANNING", panning},
+			}},
 			{"quick_options", {
 					{"PROSPECTIVE", getProspectiveMode() ? 1 : 0},
 					{"WRAPAROUND", getCursorWrapAround() ? 1 : 0},
@@ -264,10 +239,9 @@ bool Tracker::shutDown()
  	std::ofstream tomlfile;
 	//auto newfilename = filename+".toml"
     tomlfile.open ("tracker_test.toml");
-    tomlfile << std::setw(155) << data << std::endl;
+    tomlfile << std::setw(80) << data << std::endl;
     tomlfile.close();
 	
-
 	return true;
 }
 

@@ -23,144 +23,134 @@
 #ifndef __SAMPLEEDITORCONTROLASTVALUES_H__
 #define __SAMPLEEDITORCONTROLASTVALUES_H__
 
+#include <toml.hpp>
+
 #include "BasicTypes.h"
 #include "Dictionary.h"
 
 // Last values
-struct SampleEditorControlLastValues
-{
-	pp_int32 newSampleSize;
-	pp_int32 changeSignIgnoreBits;
-	float boostSampleVolume;
-	float fadeSampleVolumeStart;
-	float fadeSampleVolumeEnd;
-	float DCOffset;
-	pp_int32 silenceSize;
-	float waveFormVolume;
-	float waveFormNumPeriods;
-	
-	bool hasEQ3BandValues;
-	float EQ3BandValues[3];
-	
-	bool hasEQ10BandValues;
-	float EQ10BandValues[10];
-	
-	pp_int32 resampleInterpolationType;
-	bool adjustFtAndRelnote;
-	bool adjustSampleOffsetCommand;
-	
-	static float invalidFloatValue() 
-	{
-		return -12345678.0f;
-	}
-	
-	static int invalidIntValue() 
-	{
-		return -12345678;
-	}
-	
-	void reset()
-	{
-		newSampleSize = invalidIntValue();
-		changeSignIgnoreBits = invalidIntValue();
-		boostSampleVolume = invalidFloatValue();
-		fadeSampleVolumeStart = invalidFloatValue();
-		fadeSampleVolumeEnd = invalidFloatValue();
-		DCOffset = invalidFloatValue();
-		silenceSize = invalidIntValue();
-		waveFormVolume = invalidFloatValue();
-		waveFormNumPeriods = invalidFloatValue();
-		hasEQ3BandValues = hasEQ10BandValues = false;
-		resampleInterpolationType = invalidIntValue();
-		adjustFtAndRelnote = true;
-		adjustSampleOffsetCommand = false;
-	}
-		
-	PPDictionary convertToDictionary()
-	{
-		PPDictionary result;
-		
-		result.store("newSampleSize", newSampleSize);
+struct SampleEditorControlLastValues {
+  pp_int32 newSampleSize;
+  pp_int32 changeSignIgnoreBits;
+  float boostSampleVolume;
+  float fadeSampleVolumeStart;
+  float fadeSampleVolumeEnd;
+  float DCOffset;
+  pp_int32 silenceSize;
+  float waveFormVolume;
+  float waveFormNumPeriods;
 
-		result.store("changeSignIgnoreBits", changeSignIgnoreBits);
+  bool hasEQ3BandValues;
+  float EQ3BandValues[3];
 
-		result.store("boostSampleVolume", PPDictionary::convertFloatToIntNonLossy(boostSampleVolume));
+  bool hasEQ10BandValues;
+  float EQ10BandValues[10];
 
-		result.store("fadeSampleVolumeStart", PPDictionary::convertFloatToIntNonLossy(fadeSampleVolumeStart));
-		result.store("fadeSampleVolumeEnd", PPDictionary::convertFloatToIntNonLossy(fadeSampleVolumeEnd));
+  pp_int32 resampleInterpolationType;
+  bool adjustFtAndRelnote;
+  bool adjustSampleOffsetCommand;
 
-		result.store("DCOffset", PPDictionary::convertFloatToIntNonLossy(DCOffset));
+  static float invalidFloatValue() { return -12345678.0f; }
+  static int invalidIntValue() { return -12345678; }
 
-		result.store("silenceSize", silenceSize);
+  void reset() {
+    newSampleSize = invalidIntValue();
+    changeSignIgnoreBits = invalidIntValue();
+    boostSampleVolume = invalidFloatValue();
+    fadeSampleVolumeStart = invalidFloatValue();
+    fadeSampleVolumeEnd = invalidFloatValue();
+    DCOffset = invalidFloatValue();
+    silenceSize = invalidIntValue();
+    waveFormVolume = invalidFloatValue();
+    waveFormNumPeriods = invalidFloatValue();
+    hasEQ3BandValues = hasEQ10BandValues = false;
+    resampleInterpolationType = invalidIntValue();
+    adjustFtAndRelnote = true;
+    adjustSampleOffsetCommand = false;
+  }
 
-		result.store("waveFormVolume", PPDictionary::convertFloatToIntNonLossy(waveFormVolume));
-		result.store("waveFormNumPeriods", PPDictionary::convertFloatToIntNonLossy(waveFormNumPeriods));
+  const toml::value convertToTOML() {
+    const toml::value data{
+        {"newSampleSize", newSampleSize},
+        {"changeSignIgnoreBits", changeSignIgnoreBits},
+        {"boostSampleVolume",
+         PPDictionary::convertFloatToIntNonLossy(boostSampleVolume)},
+        {"fadeSampleVolumeStart",
+         PPDictionary::convertFloatToIntNonLossy(fadeSampleVolumeStart)},
+        {"fadeSampleVolumeEnd",
+         PPDictionary::convertFloatToIntNonLossy(fadeSampleVolumeEnd)},
+        {"DCOffset", PPDictionary::convertFloatToIntNonLossy(DCOffset)},
+        {"silenceSize", silenceSize},
+        {"waveFormVolume",
+         PPDictionary::convertFloatToIntNonLossy(waveFormVolume)},
+        {"waveFormNumPeriods",
+         PPDictionary::convertFloatToIntNonLossy(waveFormNumPeriods)},
+        {"resampleInterpolationType", resampleInterpolationType},
+        {"adjustFtAndRelnote", adjustFtAndRelnote},
+        {"adjustSampleOffsetCommands", adjustSampleOffsetCommand},
+    };
 
-		result.store("resampleInterpolationType", resampleInterpolationType);
-		
-		result.store("adjustFtAndRelnote", adjustFtAndRelnote);
+    return data;
+  }
 
-		result.store("adjustSampleOffsetCommands", adjustSampleOffsetCommand);
-		return result;
-	}
-	
-	void restoreFromDictionary(PPDictionary& dictionary)
-	{
-		PPDictionaryKey* key = dictionary.getFirstKey();
-		while (key)
-		{
-			if (key->getKey().compareToNoCase("newSampleSize") == 0)
-			{
-				newSampleSize = key->getIntValue();
-			}
-			else if (key->getKey().compareToNoCase("changeSignIgnoreBits") == 0)
-			{
-				changeSignIgnoreBits = key->getIntValue();
-			}
-			else if (key->getKey().compareToNoCase("boostSampleVolume") == 0)
-			{
-				boostSampleVolume = PPDictionary::convertIntToFloatNonLossy(key->getIntValue());
-			}
-			else if (key->getKey().compareToNoCase("fadeSampleVolumeStart") == 0)
-			{
-				fadeSampleVolumeStart = PPDictionary::convertIntToFloatNonLossy(key->getIntValue());
-			}
-			else if (key->getKey().compareToNoCase("fadeSampleVolumeEnd") == 0)
-			{
-				fadeSampleVolumeEnd = PPDictionary::convertIntToFloatNonLossy(key->getIntValue());
-			}
-			else if (key->getKey().compareToNoCase("DCOffset") == 0)
-			{
-				DCOffset = PPDictionary::convertIntToFloatNonLossy(key->getIntValue());
-			}
-			else if (key->getKey().compareToNoCase("silenceSize") == 0)
-			{
-				silenceSize = key->getIntValue();
-			}
-			else if (key->getKey().compareToNoCase("waveFormVolume") == 0)
-			{
-				waveFormVolume = PPDictionary::convertIntToFloatNonLossy(key->getIntValue());
-			}
-			else if (key->getKey().compareToNoCase("waveFormNumPeriods") == 0)
-			{
-				waveFormNumPeriods = PPDictionary::convertIntToFloatNonLossy(key->getIntValue());
-			}
-			else if (key->getKey().compareToNoCase("resampleInterpolationType") == 0)
-			{
-				resampleInterpolationType = key->getIntValue();
-			}
-			else if (key->getKey().compareToNoCase("adjustFtAndRelnote") == 0)
-			{
-				adjustFtAndRelnote = key->getBoolValue();
-			}
-			else if (key->getKey().compareToNoCase("adjustSampleOffsetCommands") == 0)
-			{
-				adjustSampleOffsetCommand = key->getBoolValue();
-			}
+  void restoreFromTOML(const toml::value data) {
+    newSampleSize = toml::find<pp_int32>(data, "newSampleSize");
+    changeSignIgnoreBits = toml::find<pp_int32>(data, "changeSignIgnoreBits");
+    boostSampleVolume = toml::find<pp_int32>(data, "boostSampleVolume");
+    fadeSampleVolumeStart = toml::find<pp_int32>(data, "fadeSampleVolumeStart");
+    fadeSampleVolumeEnd = toml::find<pp_int32>(data, "fadeSampleVolumeEnd");
+    DCOffset = toml::find<pp_int32>(data, "DCOffset");
+    silenceSize = toml::find<pp_int32>(data, "silenceSize");
+    waveFormVolume = toml::find<pp_int32>(data, "waveFormVolume");
+    waveFormNumPeriods = toml::find<pp_int32>(data, "waveFormNumPeriods");
+    waveFormNumPeriods = toml::find<pp_int32>(data, "waveFormNumPeriods");
+    resampleInterpolationType =
+        toml::find<pp_int32>(data, "resampleInterpolationType");
+    adjustFtAndRelnote = toml::find<pp_int32>(data, "adjustFtAndRelnote");
+    adjustSampleOffsetCommand =
+        toml::find<pp_int32>(data, "adjustSampleOffsetCommands");
+  }
 
-			key = dictionary.getNextKey();
-		}
-	}
+  void restoreFromDictionary(PPDictionary& dictionary) {
+    PPDictionaryKey* key = dictionary.getFirstKey();
+    while (key) {
+      //
+      if (key->getKey().compareToNoCase("newSampleSize") == 0) {
+        newSampleSize = key->getIntValue();
+      } else if (key->getKey().compareToNoCase("changeSignIgnoreBits") == 0) {
+        changeSignIgnoreBits = key->getIntValue();
+      } else if (key->getKey().compareToNoCase("boostSampleVolume") == 0) {
+        boostSampleVolume =
+            PPDictionary::convertIntToFloatNonLossy(key->getIntValue());
+      } else if (key->getKey().compareToNoCase("fadeSampleVolumeStart") == 0) {
+        fadeSampleVolumeStart =
+            PPDictionary::convertIntToFloatNonLossy(key->getIntValue());
+      } else if (key->getKey().compareToNoCase("fadeSampleVolumeEnd") == 0) {
+        fadeSampleVolumeEnd =
+            PPDictionary::convertIntToFloatNonLossy(key->getIntValue());
+      } else if (key->getKey().compareToNoCase("DCOffset") == 0) {
+        DCOffset = PPDictionary::convertIntToFloatNonLossy(key->getIntValue());
+      } else if (key->getKey().compareToNoCase("silenceSize") == 0) {
+        silenceSize = key->getIntValue();
+      } else if (key->getKey().compareToNoCase("waveFormVolume") == 0) {
+        waveFormVolume =
+            PPDictionary::convertIntToFloatNonLossy(key->getIntValue());
+      } else if (key->getKey().compareToNoCase("waveFormNumPeriods") == 0) {
+        waveFormNumPeriods =
+            PPDictionary::convertIntToFloatNonLossy(key->getIntValue());
+      } else if (key->getKey().compareToNoCase("resampleInterpolationType") ==
+                 0) {
+        resampleInterpolationType = key->getIntValue();
+      } else if (key->getKey().compareToNoCase("adjustFtAndRelnote") == 0) {
+        adjustFtAndRelnote = key->getBoolValue();
+      } else if (key->getKey().compareToNoCase("adjustSampleOffsetCommands") ==
+                 0) {
+        adjustSampleOffsetCommand = key->getBoolValue();
+      }
+
+      key = dictionary.getNextKey();
+    }
+  }
 };
 
 #endif
