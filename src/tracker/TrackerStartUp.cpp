@@ -28,6 +28,10 @@
  *
  */
 
+#include <iostream>
+
+#include <toml.hpp>
+
 #include "Tracker.h"
 #include "XMFile.h"
 #include "TrackerSettingsDatabase.h"
@@ -44,6 +48,17 @@
 #else
 	#include "LogoBig.h"
 #endif
+
+
+
+/*PPSize Tracker::getWindowSizeFromDatabase() {
+	PPSize size(PPScreen::getDefaultWidth(), PPScreen::getDefaultHeight());
+	if (XMFile::exists(System::getConfigFileName())) {
+
+	}
+
+	return size;
+}*/
 
 
 PPSize Tracker::getWindowSizeFromDatabase()
@@ -169,8 +184,7 @@ void Tracker::hideSplash()
 	screen->pauseUpdate(false);
 }
 
-void Tracker::startUp(bool forceNoSplash/* = false*/)
-{
+void Tracker::startUp(bool forceNoSplash/* = false*/) {
 	bool noSplash = forceNoSplash ? true : !getShowSplashFlagFromDatabase();
 
 	// put up splash screen if desired
@@ -185,8 +199,7 @@ void Tracker::startUp(bool forceNoSplash/* = false*/)
 
 	pp_int32 dTime;
 
-	if (!noSplash)
-	{
+	if (!noSplash) {
 		dTime = (signed)(PPGetTickCount() - startTime);
 		if (dTime > SPLASH_WAIT_TIME) dTime = SPLASH_WAIT_TIME;
 		if (dTime < 0) dTime = 0;	
@@ -194,11 +207,81 @@ void Tracker::startUp(bool forceNoSplash/* = false*/)
 		startTime = PPGetTickCount();
 	}
 	
-	if (XMFile::exists(System::getConfigFileName()))
+	// check for toml file, load it into the database
+
+	// create as copy from existing database, so all keys are in there
+	// is this necessary?
+	settingsDatabaseCopy = new TrackerSettingsDatabase(*settingsDatabase);
+
+	try
 	{
+		const std::string fname("tracker_test.toml");
+		const toml::value data = toml::parse(fname);
+
+		toml::value playmode = toml::find(data, "settings", "playmode");
+		settingsDatabase->store("PLAYMODEKEEPSETTINGS", (PPString)toml::find<std::string>(playmode, "KEEPSETTINGS").c_str());
+		settingsDatabase->store("PLAYMODE_ADVANCED_ALLOW8xx", toml::find<bool>(playmode, "ADVANCED_ALLOW8xx"));
+		settingsDatabase->store("PLAYMODE_ADVANCED_ALLOWE8x", toml::find<bool>(playmode, "ADVANCED_ALLOWE8x"));
+		settingsDatabase->store("PLAYMODE_ADVANCED_PTPITCHLIMIT", toml::find<bool>(playmode, "ADVANCED_PTPITCHLIMIT"));
+		//strd::array ADVANCED_PTPANNING = 
+		//settingsDatabase->store("PLAYMODE_ADVANCED_PTPANNING", 
+		//toml::find<std::vector<int>>(playmode, "ADVANCED_PTPANNING"));
+
+		toml::value quick_options = toml::find(data, "settings", "quick_options");
+		settingsDatabase->store("FOLLOWSONG",  toml::find<bool>(quick_options, "FOLLOWSONG"));
+		settingsDatabase->store("WRAPAROUND",  toml::find<bool>(quick_options, "WRAPAROUND"));
+		settingsDatabase->store("LIVESWITCH",  toml::find<bool>(quick_options, "LIVESWITCH"));
+		settingsDatabase->store("PROSPECTIVE", toml::find<bool>(quick_options, "PROSPECTIVE"));
+
+		toml::value disk_operations = toml::find(data, "settings", "disk_operations");
+		settingsDatabase->store("INTERNALDISKBROWSERSETTINGS",toml::find<int>(disk_operations, "INTERNALDISKBROWSERSETTINGS"));
+		settingsDatabase->store("INTERNALDISKBROWSERLASTPATH",toml::find<std::string>(disk_operations, "INTERNALDISKBROWSERLASTPATH").c_str());
+
+		toml::value HD_recorder = toml::find(data, "settings", "HD_recorder");
+		settingsDatabase->store("MIXFREQ",       toml::find<int> (HD_recorder, "MIXFREQ"));
+		settingsDatabase->store("MIXERVOLUME",   toml::find<int> (HD_recorder, "MIXERVOLUME"));
+		settingsDatabase->store("MIXERSHIFT",    toml::find<int> (HD_recorder, "MIXERSHIFT"));
+		settingsDatabase->store("INTERPOLATION", toml::find<int> (HD_recorder, "INTERPOLATION"));
+		settingsDatabase->store("RAMPING",       toml::find<bool>(HD_recorder, "RAMPING"));
+		settingsDatabase->store("ALLOWMUTING",   toml::find<bool>(HD_recorder, "ALLOWMUTING"));
+
+		toml::value sample_editor = toml::find(data, "settings", "sample_editor");
+		settingsDatabase->store("SAMPLEEDITORDECIMALOFFSETS", toml::find<int> (sample_editor, "DECIMALOFFSETS"));
+		// settingsDatabase->store("SAMPLEEDITORLASTVALUES", toml::find<int> (sample_editor, "LASTVALUES"));	
+
+		//settingsDatabase->store("optimizer
+		settingsDatabase->store("EXTENDEDORDERLIST",     toml::find<bool>(data, "settings", "EXTENDEDORDERLIST"));
+		settingsDatabase->store("TITLEPAGE",		     toml::find<bool>(data, "settings", "TITLEPAGE"));
+		settingsDatabase->store("ACTIVECOLORS", 	     (PPString)toml::find<std::string> (data, "settings", "ACTIVECOLORS").c_str());
+		settingsDatabase->store("ENVELOPEEDITORSCALE",   toml::find<int> (data, "settings", "ENVELOPEEDITORSCALE"));
+		settingsDatabase->store("ROWINSERTADD", 	     toml::find<int> (data, "settings", "ROWINSERTADD"));
+		// settingsDatabase->store("PREDEFENVELOPEVOLUME",  toml::find<int> (data, "settings", "PREDEFENVELOPEVOLUME"));
+		// settingsDatabase->store("PREDEFENVELOPEPANNING", toml::find<int> (data, "settings", "PREDEFENVELOPEPANNING"));
+		// settingsDatabase->store("EFFECTMACRO", 			 toml::find<int> (data, "settings", "EFFECTMACRO"));
+		// settingsDatabase->store("PREDEFCOLORPALETTE", 	 toml::find<int> (data, "settings", "PREDEFCOLORPALETTE"));
+
+
+
+		// std::cout << "data:" << data << "\n";
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+	}
+	
+	delete settingsDatabase;
+	settingsDatabase = settingsDatabaseCopy;
+	settingsDatabaseCopy = NULL;
+
+
+	/*if (XMFile::exists(System::getConfigFileName())) {
 		// create as copy from existing database, so all keys are in there
 		settingsDatabaseCopy = new TrackerSettingsDatabase(*settingsDatabase);
 		
+		// TODO: Check if the new style file exists and load that
+
+		// and then check for the old style one if the
+
 		XMFile f(System::getConfigFileName());
 	
 		// restore keys from disk
@@ -208,10 +291,10 @@ void Tracker::startUp(bool forceNoSplash/* = false*/)
 		delete settingsDatabase;
 		settingsDatabase = settingsDatabaseCopy;
 		settingsDatabaseCopy = NULL;
-	}
+	}*/
 
 	// apply ALL settings, not just the different ones
-	applySettings(settingsDatabase, NULL, true, false);
+	//applySettings(settingsDatabase, NULL, true, false);
 
 	// update version information
 	settingsDatabase->store("VERSION", MILKYTRACKER_VERSION);
@@ -225,17 +308,16 @@ void Tracker::startUp(bool forceNoSplash/* = false*/)
 	bool masterStart = playerMaster->start();	
 	
 	// remove splash screen
-	if (!noSplash)
-	{
-		dTime = (signed)(PPGetTickCount() - startTime);
-		if (dTime > SPLASH_WAIT_TIME/2) dTime = SPLASH_WAIT_TIME/2;
-		if (dTime < 0) dTime = 0;
-
-		System::msleep(SPLASH_WAIT_TIME/2 - dTime);
-		hideSplash();
-	}
-	else
-		screen->enableDisplay(true);			
+	//if (!noSplash) {
+	//	dTime = (signed)(PPGetTickCount() - startTime);
+	//	if (dTime > SPLASH_WAIT_TIME/2) dTime = SPLASH_WAIT_TIME/2;
+	//	if (dTime < 0) dTime = 0;
+	//
+	//	System::msleep(SPLASH_WAIT_TIME/2 - dTime);
+	//	hideSplash();
+	//}
+	//else
+	screen->enableDisplay(true);			
 	
 	screen->paint();
 	

@@ -34,6 +34,8 @@
 #include "BasicTypes.h"
 #include "Dictionary.h"
 
+// TODO: Maybe replace this with something that uses the toml directly
+
 class PPDictionaryKey;
 class XMFile;
 

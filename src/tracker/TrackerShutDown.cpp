@@ -194,37 +194,38 @@ bool Tracker::shutDown() {
 		}},
 		{"settings", {
 			{"playmode", {
-				{"PLAYMODEKEEPSETTINGS", sectionQuickOptions->keepSettings() ? playModeStrings[playMode] : playModeStrings[4]},
-				{"PLAYMODE_ADVANCED_ALLOW8xx", playerController->isPlayModeOptionEnabled(PlayerController::PlayModeOptionPanning8xx)},
-				{"PLAYMODE_ADVANCED_ALLOWE8x", playerController->isPlayModeOptionEnabled(PlayerController::PlayModeOptionPanningE8x)},
-				{"PLAYMODE_ADVANCED_PTPITCHLIMIT", playerController->isPlayModeOptionEnabled(PlayerController::PlayModeOptionForcePTPitchLimit)},
-				{"PLAYMODE_ADVANCED_PTPANNING", panning},
+				{"KEEPSETTINGS", sectionQuickOptions->keepSettings() ? playModeStrings[playMode] : playModeStrings[4]},
+				{"ADVANCED_ALLOW8xx", playerController->isPlayModeOptionEnabled(PlayerController::PlayModeOptionPanning8xx)},
+				{"ADVANCED_ALLOWE8x", playerController->isPlayModeOptionEnabled(PlayerController::PlayModeOptionPanningE8x)},
+				{"ADVANCED_PTPITCHLIMIT", playerController->isPlayModeOptionEnabled(PlayerController::PlayModeOptionForcePTPitchLimit)},
+				{"ADVANCED_PTPANNING", panning},
 			}},
 			{"quick_options", {
-					{"PROSPECTIVE", getProspectiveMode() ? 1 : 0},
-					{"WRAPAROUND", getCursorWrapAround() ? 1 : 0},
-					{"FOLLOWSONG", getFollowSong() ? 1 : 0},
-					{"LIVESWITCH", playerLogic->getLiveSwitch() ? 1 : 0}	
+					{"PROSPECTIVE", getProspectiveMode() }, 
+					{"WRAPAROUND",  getCursorWrapAround() },
+					{"FOLLOWSONG",  getFollowSong() },
+					{"LIVESWITCH",  playerLogic->getLiveSwitch() }
 			}},
 			{"disk_operations", {
 				{"INTERNALDISKBROWSERSETTINGS", sectionDiskMenu->getConfigUInt32()},
 				{"INTERNALDISKBROWSERLASTPATH", (std::string)sectionDiskMenu->getCurrentPathASCII()}
 			}},
 			{"HD_recorder", {
-				{"HDRECORDER_MIXFREQ", sectionHDRecorder->getSettingsFrequency()},
-				{"HDRECORDER_MIXERVOLUME", sectionHDRecorder->getSettingsMixerVolume()},
-				{"HDRECORDER_MIXERSHIFT", sectionHDRecorder->getSettingsMixerShift()},
-				{"HDRECORDER_RAMPING", sectionHDRecorder->getSettingsRamping() ? 1 : 0},
-				{"HDRECORDER_INTERPOLATION", sectionHDRecorder->getSettingsResampler()},
-				{"HDRECORDER_ALLOWMUTING", sectionHDRecorder->getSettingsAllowMuting() ? 1 : 0}
+				// HD_RECORDER_
+				{"MIXFREQ", sectionHDRecorder->getSettingsFrequency()},
+				{"MIXERVOLUME", sectionHDRecorder->getSettingsMixerVolume()},
+				{"MIXERSHIFT", sectionHDRecorder->getSettingsMixerShift()},
+				{"INTERPOLATION", sectionHDRecorder->getSettingsResampler()},
+				{"RAMPING", sectionHDRecorder->getSettingsRamping()}, // bool
+				{"ALLOWMUTING", sectionHDRecorder->getSettingsAllowMuting()} // bool
 			}},
 			{"sample_editor", {
-				{"SAMPLEEDITORDECIMALOFFSETS", sectionSamples->getOffsetFormat()},
-				{"SAMPLEEDITORLASTVALUES", lastValues}
+				{"DECIMALOFFSETS", sectionSamples->getOffsetFormat()},
+				// {"LASTVALUES", lastValues}
 			}},
 			{"optimizer", sectionoptimize},
 			{"ENVELOPEEDITORSCALE", sectionInstruments->getEnvelopeEditorControl()->getScale()},
-			{"EXTENDEDORDERLIST", extendedOrderlist ? 1 : 0},
+			{"EXTENDEDORDERLIST", extendedOrderlist}, // bool 
 			{"ROWINSERTADD", getPatternEditorControl()->getRowInsertAdd()},
 			{"TITLEPAGE", titlePageManager.getCurrentTitlePage()},
 			{"ACTIVECOLORS", paletteString},
