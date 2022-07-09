@@ -435,7 +435,6 @@ private:
 
 public:
 	Tracker();
-	void initDatabase();
 
 	virtual ~Tracker();
 	
@@ -468,6 +467,8 @@ public:
 	void sendNoteUp(pp_int32 note);
 
 private:
+	void initDatabase();
+
 	void switchEditMode(EditModes mode);
 
 	// Process keyboard events according to current edit mode

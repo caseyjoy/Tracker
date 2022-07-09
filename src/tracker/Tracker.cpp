@@ -151,7 +151,8 @@ Tracker::Tracker() :
 	settingsDatabase = new TrackerSettingsDatabase();
 
 	buildDefaultSettings();
-	
+	initDatabase();
+
 	tabManager = new TabManager(*this);
 	
 	playerMaster = new PlayerMaster(TrackerConfig::numTabs);
