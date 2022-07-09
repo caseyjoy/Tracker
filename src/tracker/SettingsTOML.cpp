@@ -36,6 +36,7 @@
 // settingsDatabaseCopy = NULL;
 // return 
 
+// TODO: Return false if it doesn't find the expected file
 void Tracker::loadConfig(TrackerSettingsDatabase* settingsDatabase) {
 	try {
 		const std::string fname("tracker_test.toml");
@@ -44,6 +45,10 @@ void Tracker::loadConfig(TrackerSettingsDatabase* settingsDatabase) {
 		toml::value resolution = toml::find(data, "settings", "resolution");
 		settingsDatabase->store("XRESOLUTION", toml::find<int> (resolution, "width"));
 		settingsDatabase->store("YRESOLUTION", toml::find<int> (resolution, "height"));
+
+        settingsDatabase->store("FULLSCREEN", toml::find<bool> (data, "settings", "FULLSCREEN"));
+		settingsDatabase->store("SCREENSCALEFACTOR", toml::find<int> (data, "settings", "SCREENSCALEFACTOR"));
+        settingsDatabase->store("SHOWSPLASH", toml::find<bool> (data, "settings", "SHOWSPLASH"));
 
 		toml::value playmode = toml::find(data, "settings", "playmode");
 		settingsDatabase->store("PLAYMODEKEEPSETTINGS", (PPString)toml::find<std::string>(playmode, "KEEPSETTINGS").c_str());
@@ -91,6 +96,7 @@ void Tracker::loadConfig(TrackerSettingsDatabase* settingsDatabase) {
 	}
 	catch(const std::exception& e) {
 		std::cerr << e.what() << '\n';
+        //return false;
 	}
 }
 
@@ -157,6 +163,9 @@ void Tracker::saveConfig(TrackerSettingsDatabase* settingsDatabase) {
 			{"config_version", 0}
 		}},
 		{"settings", {
+            {"FULLSCREEN", settingsDatabase->restore("FULLSCREEN")->getBoolValue()},
+            {"SCREENSCALEFACTOR", settingsDatabase->restore("SCREENSCALEFACTOR")->getIntValue()},
+            {"SHOWSPLASH", settingsDatabase->restore("SHOWSPLASH")->getBoolValue()},
 			{"resolution", {
                 {"width", settingsDatabase->restore("XRESOLUTION")->getIntValue()},
                 {"height", settingsDatabase->restore("YRESOLUTION")->getIntValue()}

@@ -435,6 +435,7 @@ private:
 
 public:
 	Tracker();
+	void initDatabase();
 
 	virtual ~Tracker();
 	

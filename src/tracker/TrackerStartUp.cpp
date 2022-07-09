@@ -50,7 +50,7 @@
 #endif
 
 // I will probably need to update the resolution in place though
-PPSize Tracker::getWindowSizeFromDatabase() {
+/*PPSize Tracker::getWindowSizeFromDatabase() {
 	PPSize size(PPScreen::getDefaultWidth(), PPScreen::getDefaultHeight());
 
 	const std::string fname("tracker_test.toml");
@@ -66,9 +66,21 @@ PPSize Tracker::getWindowSizeFromDatabase() {
 	size.width  = settingsDatabase->restore("XRESOLUTION")->getIntValue();
 
 	return size;
+}*/
+PPSize Tracker::getWindowSizeFromDatabase() {
+	// TODO: Fall back to old config file if the new one didn't exist / didn't have a resolution?
+	PPSize size(PPScreen::getDefaultWidth(), PPScreen::getDefaultHeight());
+
+	size.width  = settingsDatabase->restore("XRESOLUTION")->getIntValue();
+	size.height = settingsDatabase->restore("YRESOLUTION")->getIntValue();
+
+	std::cout << "###" << size.height << "\n";
+
+	return size;
 }
 
-bool Tracker::getFullScreenFlagFromDatabase() {
+
+/* bool Tracker::getFullScreenFlagFromDatabase() {
 	bool fullScreen = false;
 	
 	if (XMFile::exists(System::getConfigFileName()))
@@ -81,9 +93,14 @@ bool Tracker::getFullScreenFlagFromDatabase() {
 	}
 
 	return fullScreen;
+} */
+bool Tracker::getFullScreenFlagFromDatabase() {	
+	bool fullScreen = false;
+	fullScreen = settingsDatabase->restore("FULLSCREEN")->getBoolValue();
+	return fullScreen;
 }
 
-pp_int32 Tracker::getScreenScaleFactorFromDatabase()
+/* pp_int32 Tracker::getScreenScaleFactorFromDatabase()
 {
 	pp_int32 scaleFactor = 1;
 	
@@ -97,10 +114,14 @@ pp_int32 Tracker::getScreenScaleFactorFromDatabase()
 	}
 
 	return scaleFactor;
+} */
+pp_int32 Tracker::getScreenScaleFactorFromDatabase() {
+	pp_int32 scaleFactor = 1;
+	scaleFactor = settingsDatabase->restore("SCREENSCALEFACTOR")->getIntValue();
+	return scaleFactor;
 }
 
-bool Tracker::getShowSplashFlagFromDatabase()
-{
+/* bool Tracker::getShowSplashFlagFromDatabase() {
 	bool showSplash = true;
 	
 	if (XMFile::exists(System::getConfigFileName()))
@@ -112,6 +133,11 @@ bool Tracker::getShowSplashFlagFromDatabase()
 		delete settingsDatabaseCopy;
 	}
 
+	return showSplash;
+} */
+bool Tracker::getShowSplashFlagFromDatabase() {
+	bool showSplash = true;
+	showSplash = settingsDatabase->restore("SHOWSPLASH")->getBoolValue();
 	return showSplash;
 }
 
@@ -173,6 +199,16 @@ void Tracker::hideSplash()
 	screen->pauseUpdate(false);
 }
 
+void Tracker::initDatabase() {
+	loadConfig(settingsDatabase);
+
+	// update version information
+	settingsDatabase->store("VERSION", MILKYTRACKER_VERSION);
+
+	// I think this line was only for applying settings from a copy?
+	// applySettings(settingsDatabase, NULL, true, false);
+}
+
 void Tracker::startUp(bool forceNoSplash/* = false*/) {
 	bool noSplash = forceNoSplash ? true : !getShowSplashFlagFromDatabase();
 
@@ -202,7 +238,7 @@ void Tracker::startUp(bool forceNoSplash/* = false*/) {
 	// is this necessary?
 
 	//settingsDatabase = loadConfig();  
-	loadConfig(settingsDatabase);
+
 
 	/*if (XMFile::exists(System::getConfigFileName())) {
 		// create as copy from existing database, so all keys are in there
@@ -224,10 +260,9 @@ void Tracker::startUp(bool forceNoSplash/* = false*/) {
 	}*/
 
 	// apply ALL settings, not just the different ones
-	//applySettings(settingsDatabase, NULL, true, false);
+	//
 
-	// update version information
-	settingsDatabase->store("VERSION", MILKYTRACKER_VERSION);
+
 	
 	// Update info panels
 	updateSongInfo(false);

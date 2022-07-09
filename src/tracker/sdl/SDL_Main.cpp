@@ -804,6 +804,7 @@ void initTracker(pp_uint32 bpp, PPDisplayDevice::Orientations orientation,
 
 	// ------------ Initialise tracker ---------------
 	myTracker = new Tracker();
+	myTracker->initDatabase();
 
 	PPSize windowSize = myTracker->getWindowSizeFromDatabase();
 	bool fullScreen = myTracker->getFullScreenFlagFromDatabase();
