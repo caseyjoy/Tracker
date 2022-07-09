@@ -49,19 +49,17 @@
 	#include "LogoBig.h"
 #endif
 
-
-
-/*PPSize Tracker::getWindowSizeFromDatabase() {
+// I will probably need to update the resolution in place though
+PPSize Tracker::getWindowSizeFromDatabase() {
 	PPSize size(PPScreen::getDefaultWidth(), PPScreen::getDefaultHeight());
-	if (XMFile::exists(System::getConfigFileName())) {
 
-	}
+	size.height = settingsDatabase->restore("YRESOLUTION")->getIntValue();
+	size.width = settingsDatabase->restore("XRESOLUTION")->getIntValue();
 
 	return size;
-}*/
+}
 
-
-PPSize Tracker::getWindowSizeFromDatabase()
+/*PPSize Tracker::getWindowSizeFromDatabase()
 {
 	PPSize size(PPScreen::getDefaultWidth(), PPScreen::getDefaultHeight());
 	
@@ -76,7 +74,7 @@ PPSize Tracker::getWindowSizeFromDatabase()
 	}
 
 	return size;
-}
+}*/
 
 bool Tracker::getFullScreenFlagFromDatabase()
 {
@@ -217,6 +215,10 @@ void Tracker::startUp(bool forceNoSplash/* = false*/) {
 	{
 		const std::string fname("tracker_test.toml");
 		const toml::value data = toml::parse(fname);
+
+		toml::value resolution = toml::find(data, "settings", "resolution");
+		settingsDatabase->store("XRESOLUTION", toml::find<int> (resolution, "X"));
+		settingsDatabase->store("YRESOLUTION", toml::find<int> (resolution, "Y"));
 
 		toml::value playmode = toml::find(data, "settings", "playmode");
 		settingsDatabase->store("PLAYMODEKEEPSETTINGS", (PPString)toml::find<std::string>(playmode, "KEEPSETTINGS").c_str());

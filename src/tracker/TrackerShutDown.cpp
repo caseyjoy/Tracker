@@ -193,6 +193,11 @@ bool Tracker::shutDown() {
 			{"config_version", 0}
 		}},
 		{"settings", {
+			{"resolution", {
+								{"X", 1200},
+								{"Y", 800}
+							}
+			},
 			{"playmode", {
 				{"KEEPSETTINGS", sectionQuickOptions->keepSettings() ? playModeStrings[playMode] : playModeStrings[4]},
 				{"ADVANCED_ALLOW8xx", playerController->isPlayModeOptionEnabled(PlayerController::PlayModeOptionPanning8xx)},
