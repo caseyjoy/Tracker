@@ -42,8 +42,8 @@ void Tracker::loadConfig(TrackerSettingsDatabase* settingsDatabase) {
 		const toml::value data = toml::parse(fname);
 
 		toml::value resolution = toml::find(data, "settings", "resolution");
-		settingsDatabase->store("XRESOLUTION", toml::find<int> (resolution, "X"));
-		settingsDatabase->store("YRESOLUTION", toml::find<int> (resolution, "Y"));
+		settingsDatabase->store("XRESOLUTION", toml::find<int> (resolution, "width"));
+		settingsDatabase->store("YRESOLUTION", toml::find<int> (resolution, "height"));
 
 		toml::value playmode = toml::find(data, "settings", "playmode");
 		settingsDatabase->store("PLAYMODEKEEPSETTINGS", (PPString)toml::find<std::string>(playmode, "KEEPSETTINGS").c_str());
@@ -158,10 +158,9 @@ void Tracker::saveConfig(TrackerSettingsDatabase* settingsDatabase) {
 		}},
 		{"settings", {
 			{"resolution", {
-								{"X", settingsDatabase->restore("XRESOLUTION")->getIntValue()},
-								{"Y", settingsDatabase->restore("YRESOLUTION")->getIntValue()}
-							}
-			},
+                {"width", settingsDatabase->restore("XRESOLUTION")->getIntValue()},
+                {"height", settingsDatabase->restore("YRESOLUTION")->getIntValue()}
+            }},
 			{"playmode", {
 				{"KEEPSETTINGS", sectionQuickOptions->keepSettings() ? playModeStrings[playMode] : playModeStrings[4]},
 				{"ADVANCED_ALLOW8xx", playerController->isPlayModeOptionEnabled(PlayerController::PlayModeOptionPanning8xx)},

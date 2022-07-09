@@ -59,8 +59,8 @@ PPSize Tracker::getWindowSizeFromDatabase() {
 	// This isn't really ideal, it should load in the whole settings file
 	// before setting the resolution
 	toml::value resolution = toml::find(data, "settings", "resolution");
-	settingsDatabase->store("XRESOLUTION", toml::find<int> (resolution, "X"));
-	settingsDatabase->store("YRESOLUTION", toml::find<int> (resolution, "Y"));
+	settingsDatabase->store("XRESOLUTION", toml::find<int> (resolution, "width"));
+	settingsDatabase->store("YRESOLUTION", toml::find<int> (resolution, "height"));
 
 	size.height = settingsDatabase->restore("YRESOLUTION")->getIntValue();
 	size.width  = settingsDatabase->restore("XRESOLUTION")->getIntValue();
