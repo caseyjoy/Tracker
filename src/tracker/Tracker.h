@@ -152,6 +152,9 @@ private:
 	TrackerSettingsDatabase* settingsDatabase;
 	TrackerSettingsDatabase* settingsDatabaseCopy;
 
+	void loadConfig(TrackerSettingsDatabase* settingsDatabase);
+	void saveConfig(TrackerSettingsDatabase* settingsDatabase);
+
 	PPSystemString currentFileName;
 	bool lastState;
 

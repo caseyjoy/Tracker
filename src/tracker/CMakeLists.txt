@@ -104,7 +104,8 @@ add_executable(tracker
     Undo.cpp
     VRand.cpp
     Zapper.cpp
-
+    SettingsTOML.cpp
+    
     # Headers
     ${PROJECT_BINARY_DIR}/src/tracker/version.h
     AnimatedFXControl.h
