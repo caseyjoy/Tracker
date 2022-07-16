@@ -84,8 +84,32 @@ const SYSCHAR* System::getTempFileName()
 	return buffer;
 }
 
-const SYSCHAR* System::getConfigFileName()
-{
+const SYSCHAR* System::getTOMLConfigFileName(){
+#ifdef __HAIKU__
+#else
+	char *home = getenv("HOME");
+	if(!home) {
+		// If $HOME isn't set, save in the current dir
+		strncpy(buffer, "milkytracker_config.toml", PATH_MAX);
+		return buffer;
+	}
+	// location based on xdg basedir spec
+	char *xdg_config_home = getenv("XDG_CONFIG_HOME");
+	if(xdg_config_home)
+		strncpy(buffer, xdg_config_home, PATH_MAX);
+	else {
+		strncpy(buffer, home, PATH_MAX);
+		strncat(buffer, "/.config", PATH_MAX);
+	}
+	mkdir(buffer, S_IRWXU);
+	strncat(buffer, "/milkytracker", PATH_MAX);
+	mkdir(buffer, S_IRWXU);
+	strncat(buffer, "/config.toml", PATH_MAX);
+	return buffer;
+#endif
+}
+
+const SYSCHAR* System::getOldConfigFileName() {
 #ifdef __HAIKU__
 	BPath path;
 	find_directory(B_USER_SETTINGS_DIRECTORY, &path);

@@ -49,24 +49,7 @@
 	#include "LogoBig.h"
 #endif
 
-// I will probably need to update the resolution in place though
-/*PPSize Tracker::getWindowSizeFromDatabase() {
-	PPSize size(PPScreen::getDefaultWidth(), PPScreen::getDefaultHeight());
-
-	const std::string fname("tracker_test.toml");
-	const toml::value data = toml::parse(fname);
-
-	// This isn't really ideal, it should load in the whole settings file
-	// before setting the resolution
-	toml::value resolution = toml::find(data, "settings", "resolution");
-	settingsDatabase->store("XRESOLUTION", toml::find<int> (resolution, "width"));
-	settingsDatabase->store("YRESOLUTION", toml::find<int> (resolution, "height"));
-
-	size.height = settingsDatabase->restore("YRESOLUTION")->getIntValue();
-	size.width  = settingsDatabase->restore("XRESOLUTION")->getIntValue();
-
-	return size;
-}*/
+// It will probably need to update the resolution in place as well when saving?
 PPSize Tracker::getWindowSizeFromDatabase() {
 	// TODO: Fall back to old config file if the new one didn't exist / didn't have a resolution?
 	PPSize size(PPScreen::getDefaultWidth(), PPScreen::getDefaultHeight());
@@ -79,62 +62,18 @@ PPSize Tracker::getWindowSizeFromDatabase() {
 	return size;
 }
 
-
-/* bool Tracker::getFullScreenFlagFromDatabase() {
-	bool fullScreen = false;
-	
-	if (XMFile::exists(System::getConfigFileName()))
-	{
-		TrackerSettingsDatabase* settingsDatabaseCopy = new TrackerSettingsDatabase(*settingsDatabase);		
-		XMFile f(System::getConfigFileName());	
-		settingsDatabaseCopy->serialize(f);			
-		fullScreen = settingsDatabaseCopy->restore("FULLSCREEN")->getBoolValue();
-		delete settingsDatabaseCopy;
-	}
-
-	return fullScreen;
-} */
 bool Tracker::getFullScreenFlagFromDatabase() {	
 	bool fullScreen = false;
 	fullScreen = settingsDatabase->restore("FULLSCREEN")->getBoolValue();
 	return fullScreen;
 }
 
-/* pp_int32 Tracker::getScreenScaleFactorFromDatabase()
-{
-	pp_int32 scaleFactor = 1;
-	
-	if (XMFile::exists(System::getConfigFileName()))
-	{
-		TrackerSettingsDatabase* settingsDatabaseCopy = new TrackerSettingsDatabase(*settingsDatabase);		
-		XMFile f(System::getConfigFileName());	
-		settingsDatabaseCopy->serialize(f);			
-		scaleFactor = settingsDatabaseCopy->restore("SCREENSCALEFACTOR")->getIntValue();
-		delete settingsDatabaseCopy;
-	}
-
-	return scaleFactor;
-} */
 pp_int32 Tracker::getScreenScaleFactorFromDatabase() {
 	pp_int32 scaleFactor = 1;
 	scaleFactor = settingsDatabase->restore("SCREENSCALEFACTOR")->getIntValue();
 	return scaleFactor;
 }
 
-/* bool Tracker::getShowSplashFlagFromDatabase() {
-	bool showSplash = true;
-	
-	if (XMFile::exists(System::getConfigFileName()))
-	{
-		TrackerSettingsDatabase* settingsDatabaseCopy = new TrackerSettingsDatabase(*settingsDatabase);		
-		XMFile f(System::getConfigFileName());	
-		settingsDatabaseCopy->serialize(f);			
-		showSplash = settingsDatabaseCopy->restore("SHOWSPLASH")->getBoolValue();
-		delete settingsDatabaseCopy;
-	}
-
-	return showSplash;
-} */
 bool Tracker::getShowSplashFlagFromDatabase() {
 	bool showSplash = true;
 	showSplash = settingsDatabase->restore("SHOWSPLASH")->getBoolValue();
@@ -200,13 +139,33 @@ void Tracker::hideSplash()
 }
 
 void Tracker::initDatabase() {
-	loadConfig(settingsDatabase);
+	bool found_toml_config = loadConfig(settingsDatabase);
 
 	// update version information
 	settingsDatabase->store("VERSION", MILKYTRACKER_VERSION);
 
-	// I think this line was only for applying settings from a copy?
-	// applySettings(settingsDatabase, NULL, true, false);
+	// if something went wrong, try loading the old one instead
+	if (!found_toml_config && XMFile::exists(System::getOldConfigFileName())) {
+		// create as copy from existing database, so all keys are in there
+		settingsDatabaseCopy = new TrackerSettingsDatabase(*settingsDatabase);
+
+		XMFile f(System::getOldConfigFileName());
+	
+		// restore keys from disk
+		settingsDatabaseCopy->serialize(f);	
+		
+		// everything alright, delete old database and take new one
+		delete settingsDatabase;
+		settingsDatabase = settingsDatabaseCopy;
+		settingsDatabaseCopy = NULL;
+		// apply ALL settings, not just the different ones
+		applySettings(settingsDatabase, NULL, true, false); // Is this required?
+	}
+
+
+
+
+
 }
 
 void Tracker::startUp(bool forceNoSplash/* = false*/) {
@@ -232,38 +191,6 @@ void Tracker::startUp(bool forceNoSplash/* = false*/) {
 		startTime = PPGetTickCount();
 	}
 	
-	// check for toml file, load it into the database
-
-	// create as copy from existing database, so all keys are in there
-	// is this necessary?
-
-	//settingsDatabase = loadConfig();  
-
-
-	/*if (XMFile::exists(System::getConfigFileName())) {
-		// create as copy from existing database, so all keys are in there
-		settingsDatabaseCopy = new TrackerSettingsDatabase(*settingsDatabase);
-		
-		// TODO: Check if the new style file exists and load that
-
-		// and then check for the old style one if the
-
-		XMFile f(System::getConfigFileName());
-	
-		// restore keys from disk
-		settingsDatabaseCopy->serialize(f);	
-		
-		// everything alright, delete old database and take new one
-		delete settingsDatabase;
-		settingsDatabase = settingsDatabaseCopy;
-		settingsDatabaseCopy = NULL;
-	}*/
-
-	// apply ALL settings, not just the different ones
-	//
-
-
-	
 	// Update info panels
 	updateSongInfo(false);
 	
@@ -273,16 +200,16 @@ void Tracker::startUp(bool forceNoSplash/* = false*/) {
 	bool masterStart = playerMaster->start();	
 	
 	// remove splash screen
-	//if (!noSplash) {
-	//	dTime = (signed)(PPGetTickCount() - startTime);
-	//	if (dTime > SPLASH_WAIT_TIME/2) dTime = SPLASH_WAIT_TIME/2;
-	//	if (dTime < 0) dTime = 0;
-	//
-	//	System::msleep(SPLASH_WAIT_TIME/2 - dTime);
-	//	hideSplash();
-	//}
-	//else
-	screen->enableDisplay(true);			
+	if (!noSplash) {
+		dTime = (signed)(PPGetTickCount() - startTime);
+		if (dTime > SPLASH_WAIT_TIME/2) dTime = SPLASH_WAIT_TIME/2;
+		if (dTime < 0) dTime = 0;
+	
+		System::msleep(SPLASH_WAIT_TIME/2 - dTime);
+		hideSplash();
+	}
+	else
+		screen->enableDisplay(true);			
 	
 	screen->paint();
 	

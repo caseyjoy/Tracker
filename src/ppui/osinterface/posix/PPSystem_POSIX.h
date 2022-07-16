@@ -33,15 +33,15 @@
 
 #include "../../../milkyplay/MilkyPlayCommon.h"
 
-class System
-{
+class System {
 private:
 	static SYSCHAR buffer[];
 
 public:
 	static const SYSCHAR* getTempFileName();
 
-	static const SYSCHAR* getConfigFileName();
+	static const SYSCHAR* getTOMLConfigFileName();
+	static const SYSCHAR* getOldConfigFileName();
 
 	static void msleep(int msecs);
 };

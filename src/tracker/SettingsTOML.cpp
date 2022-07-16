@@ -37,9 +37,10 @@
 // return 
 
 // TODO: Return false if it doesn't find the expected file
-void Tracker::loadConfig(TrackerSettingsDatabase* settingsDatabase) {
+bool Tracker::loadConfig(TrackerSettingsDatabase* settingsDatabase) {
 	try {
-		const std::string fname("tracker_test.toml");
+        const SYSCHAR* filename = System::getTOMLConfigFileName();
+		const std::string fname(filename);
 		const toml::value data = toml::parse(fname);
 
 		toml::value resolution = toml::find(data, "settings", "resolution");
@@ -93,10 +94,13 @@ void Tracker::loadConfig(TrackerSettingsDatabase* settingsDatabase) {
 		// settingsDatabase->store("PREDEFCOLORPALETTE", 	 toml::find<int> (data, "settings", "PREDEFCOLORPALETTE"));
 
 		// std::cout << "data:" << data << "\n";
+
+		return true;
 	}
 	catch(const std::exception& e) {
-		std::cerr << e.what() << '\n';
-        //return false;
+		// std::cerr << e.what() << '\n';
+        // return false;
+		return false;
 	}
 }
 
@@ -216,7 +220,9 @@ void Tracker::saveConfig(TrackerSettingsDatabase* settingsDatabase) {
 	//std::cout << "filename is... " << filename << "\n";
  	std::ofstream tomlfile;
 	//auto newfilename = filename+".toml"
-    tomlfile.open ("tracker_test.toml");
+    const SYSCHAR* filename = System::getTOMLConfigFileName();
+    tomlfile.open (filename);
+    //tomlfile.open ("tracker_test.toml");
     tomlfile << std::setw(80) << data << std::endl;
     tomlfile.close();
 }
