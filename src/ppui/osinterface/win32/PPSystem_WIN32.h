@@ -41,7 +41,8 @@ private:
 public:
 	static const SYSCHAR* getTempFileName();
 
-	static const SYSCHAR* getConfigFileName(SYSCHAR* fileName = NULL);
+	static const SYSCHAR* getTOMLConfigFileName(SYSCHAR* fileName = NULL);
+	static const SYSCHAR* getOldConfigFileName(SYSCHAR* fileName = NULL);
 
 	static void msleep(int msecs);
 };

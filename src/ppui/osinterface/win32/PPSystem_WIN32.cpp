@@ -34,8 +34,8 @@
 
 SYSCHAR System::buffer[MAX_PATH+1];
 
-const SYSCHAR* System::getTempFileName()
-{
+// TODO: This might need to be changed to not always use getOldConfigFileName
+const SYSCHAR* System::getTempFileName() {
 	TCHAR szPath[MAX_PATH+1];
 	UINT result = 0;
 
@@ -43,13 +43,31 @@ const SYSCHAR* System::getTempFileName()
 	if (dwRetVal != 0 || dwRetVal <= MAX_PATH)
 		result = GetTempFileName(szPath, _T("mt"), ::GetTickCount(), buffer);
 	if (result == 0)
-		return getConfigFileName(_T("milkytracker_temp"));
+		return getOldConfigFileName(_T("milkytracker_temp"));
 
 	return buffer;
 }
 
-const SYSCHAR* System::getConfigFileName(SYSCHAR *fileName/* = NULL*/)
-{
+const SYSCHAR* System::getTOMLConfigFileName(SYSCHAR *fileName/* = NULL*/) {
+	TCHAR szPath[MAX_PATH + 1];
+
+	DWORD size = GetEnvironmentVariable(_T("APPDATA"), szPath, MAX_PATH);
+
+	if (size) {
+		_tcscat_s(szPath, MAX_PATH, _T("\\MilkyTracker"));
+		CreateDirectory(szPath, NULL);
+		_tcscat_s(szPath, MAX_PATH, _T("\\"));
+	}
+	if (fileName)
+		_tcscat_s(szPath, MAX_PATH, fileName);
+	else
+		_tcscat_s(szPath, MAX_PATH, _T("milkytracker.toml"));
+	_tcscpy(buffer, szPath);
+
+	return buffer;
+}
+
+const SYSCHAR* System::getOldConfigFileName(SYSCHAR *fileName/* = NULL*/) {
 	TCHAR szPath[MAX_PATH + 1];
 
 	DWORD size = GetEnvironmentVariable(_T("APPDATA"), szPath, MAX_PATH);
