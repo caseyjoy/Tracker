@@ -973,13 +973,14 @@ mp_sint32 PlayerGeneric::exportToWAV(const SYSCHAR* fileName, XModule* module,
 
 	if (player)
 	{
+		player->startPlaying(module, false, startOrder, 0, -1, customPanningTable, false, -1);
+
 		if (mutingArray && mutingNumChannels > 0 && mutingNumChannels <= module->header.channum)
 		{
 			for (mp_uint32 i = 0; i < mutingNumChannels; i++)
 				player->muteChannel(i, mutingArray[i] == 1);
 		}
-		player->startPlaying(module, false, startOrder, 0, -1, customPanningTable, false, -1);
-		
+
 		mixer.start();
 	}
 
